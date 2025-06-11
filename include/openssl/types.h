@@ -179,6 +179,7 @@ typedef struct x509_store_ctx_st X509_STORE_CTX;
 typedef struct x509_object_st X509_OBJECT;
 typedef struct x509_lookup_st X509_LOOKUP;
 typedef struct x509_lookup_method_st X509_LOOKUP_METHOD;
+typedef struct x509_additional_constraint_st X509_ADDITIONAL_CONSTRAINT;
 typedef struct X509_VERIFY_PARAM_st X509_VERIFY_PARAM;
 
 typedef struct x509_sig_info_st X509_SIG_INFO;

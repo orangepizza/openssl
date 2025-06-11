@@ -69,6 +69,7 @@ typedef enum {
 {-
     generate_stack_macros("X509_LOOKUP")
     .generate_stack_macros("X509_OBJECT")
+    .generate_stack_macros("X509_ADDITIONAL_CONSTRAINT")
     .generate_stack_macros("X509_VERIFY_PARAM");
 -}
 

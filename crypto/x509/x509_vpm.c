@@ -102,6 +102,8 @@ void X509_VERIFY_PARAM_free(X509_VERIFY_PARAM *param)
     OPENSSL_free(param->peername);
     OPENSSL_free(param->email);
     OPENSSL_free(param->ip);
+    OPENSSL_free(param->distrust_after);
+    OPENSSL_free(param->nc);
     OPENSSL_free(param);
 }
 

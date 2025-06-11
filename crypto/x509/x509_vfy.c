@@ -79,6 +79,7 @@ static int check_crl_chain(X509_STORE_CTX *ctx,
                            STACK_OF(X509) *cert_path,
                            STACK_OF(X509) *crl_path);
 
+static int expose_additional_trust_change(X509_STORE_CTX *ctx);
 static int internal_verify(X509_STORE_CTX *ctx);
 
 static int null_callback(int ok, X509_STORE_CTX *e)
@@ -252,6 +253,11 @@ static int verify_chain(X509_STORE_CTX *ctx)
     if (ok <= 0)
         return ok;
 
+    /* Check if chain is effected by Additional Trust Changes */
+    ok = expose_additional_trust_change(ctx);
+    if (ok <= 0)
+        return ok;
+
     if ((ok = check_name_constraints(ctx)) <= 0)
         return ok;
 
@@ -267,6 +273,42 @@ static int verify_chain(X509_STORE_CTX *ctx)
     if ((ctx->param->flags & X509_V_FLAG_POLICY_CHECK) != 0)
         ok = ctx->check_policy(ctx);
     return ok;
+}
+
+/* this function lookup and expose aproperate trust limiter
+ * made by root store so other fuction can use
+ */
+static int expose_additional_trust_change(X509_STORE_CTX *ctx)
+{
+    int i;
+    X509 *trustanchor;
+    ASN1_OCTET_STRING *t_skid;
+
+    /* clean up old trust param */
+    ctx->param->distrust_after = NULL;
+    ctx->param->nc = NULL;
+
+    /* Nothing to check, pass */
+    if(ctx->param->additional_constraints== NULL)
+        return 1;
+    
+    i = (sk_X509_num(ctx->chain) - 1);
+    trustanchor = sk_X509_value(ctx->chain, i);
+    t_skid = trustanchor->skid;
+    for (i = 0; i < sk_X509_ADDITIONAL_CONSTRAINT_num(ctx->param->additional_constraints); i++) {
+        X509_ADDITIONAL_CONSTRAINT *current;
+
+        current = sk_X509_ADDITIONAL_CONSTRAINT_value(ctx->param->additional_constraints, i);
+        if (ASN1_OCTET_STRING_cmp(t_skid, current->skid) == 0) {
+            /* found, NULL in here means this CA doesn't have that type of varidation*/
+            if ((current->distrust_after) != NULL)
+                ctx->param->distrust_after = current->distrust_after;
+            if ((current->name_constraint) != NULL)
+                ctx->param->nc = current->name_constraint;
+            break;
+        }
+    }
+    return 1;
 }
 
 int X509_STORE_CTX_verify(X509_STORE_CTX *ctx)
@@ -1876,6 +1918,16 @@ int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
         return 0;
     CB_FAIL_IF(i == 0, ctx, x, depth, X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD);
     CB_FAIL_IF(i < 0, ctx, x, depth, X509_V_ERR_CERT_HAS_EXPIRED);
+
+    /* test for external distrustAfter gradual distrust */
+    
+    if (ctx->param->distrust_after != NULL){
+        i = X509_cmp_time(X509_get0_notBefore(x), ctx->param->distrust_after);
+        if (i <= 0 && depth < 0)
+            return 0;
+        CB_FAIL_IF(i == 0, ctx, x, depth, X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD);
+        CB_FAIL_IF(i < 0, ctx, x, depth, X509_V_ERR_CERT_UNTRUSTED);
+    }
     return 1;
 }
 

@@ -285,6 +285,13 @@ struct x509_store_ctx_st {      /* X509_STORE_CTX */
     char *propq;
 };
 
+/* additional constraint set by trust store outside of certificate file */
+struct x509_additional_constraint_st {
+    ASN1_OCTET_STRING *skid;  /* skid of root CA this constraint applies */
+    time_t *distrust_after;    /* this CA is not trusted if leaf's notbefore is after this */
+    NAME_CONSTRAINTS *name_constraint; /* this root CA is only Valid for those domains */
+};
+
 /* PKCS#8 private key info structure */
 
 struct pkcs8_priv_key_info_st {

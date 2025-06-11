@@ -36,6 +36,10 @@ struct X509_VERIFY_PARAM_st {
     size_t emaillen;
     unsigned char *ip;          /* If not NULL IP address to match */
     size_t iplen;               /* Length of IP address */
+    /* External trust limiter from Mozilla Root Program */
+    STACK_OF(X509_ADDITIONAL_CONSTRAINT) *additional_constraints;
+    time_t *distrust_after;     /* cert signed after this will be rejected */
+    NAME_CONSTRAINTS *nc;        /* Externally added Name constraints */
 };
 
 /* No error callback if depth < 0 */
@@ -105,6 +109,7 @@ struct x509_lookup_st {
     void *method_data;          /* method data */
     X509_STORE *store_ctx;      /* who owns us */
 };
+
 
 /*
  * This is used to hold everything.  It is used for all certificate
