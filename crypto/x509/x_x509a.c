@@ -172,3 +172,56 @@ STACK_OF(ASN1_OBJECT) *X509_get0_reject_objects(X509 *x)
         return x->aux->reject;
     return NULL;
 }
+
+
+int X509_add1_other_algor(X509 *x, const X509_ALGOR *obj)
+{
+    X509_CERT_AUX *aux;
+    ASN1_OBJECT *objtmp = NULL;
+    if (obj) {
+        objtmp = OBJ_dup(obj);
+        if (!objtmp)
+            return 0;
+    }
+    if ((aux = aux_get(x)) == NULL)
+        goto err;
+    if (aux->other == NULL
+        && (aux->other = sk_X509_ALGOR_new_null()) == NULL)
+        goto err;
+    if (!objtmp || sk_X509_ALGOR_push(aux->other, objtmp))
+        return 1;
+ err:
+    X509_ALGOR_free(objtmp);
+    return 0;
+}
+
+void X509_other_clear(X509 *x)
+{
+    if (x->aux) {
+        sk_ASN1_OBJECT_pop_free(x->aux->other, X509_ALGOR_free);
+        x->aux->other = NULL;
+    }
+}
+
+
+STACK_OF(X509_ALGOR) *X509_get0_other_algors(X509 *x)
+{
+    if (x->aux != NULL)
+        return x->aux->other;
+    return NULL;
+}
+
+
+/* this only returns first member with mathing nid */
+X509_ALGOR *X509_get0_other_by_nid(X509 *x, int nid)
+{
+    int i;
+    if (x->aux == NULL)
+        return NULL;
+    for(i=0; i < sk_X509_ALGOR_num(x->aux->other); i++){
+        X509_ALGOR *current = sk_X509_ALGOR_value(x->aux->other, i);
+        if (current->algorithm != NULL && nid == OBJ_obj2nid(current->algorithm))
+            return current;
+    }
+    return NULL;
+}
