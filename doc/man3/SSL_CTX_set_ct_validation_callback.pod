@@ -34,12 +34,16 @@ certificate timestamps (SCTs) either for a given SSL connection or for all
 connections that share the given SSL context, respectively.
 This is accomplished by setting a built-in CT validation callback.
 The behaviour of the callback is determined by the B<validation_mode> argument,
-which can be either of B<SSL_CT_VALIDATION_PERMISSIVE> or
-B<SSL_CT_VALIDATION_STRICT> as described below.
+which can be either of B<SSL_CT_VALIDATION_PERMISSIVE>,
+B<SSL_CT_VALIDATION_STRICT> or B<SSL_CT_VALIDATION_PUBLICTLS> as described below.
 
 If B<validation_mode> is equal to B<SSL_CT_VALIDATION_STRICT>, then in a full
 TLS handshake with the verification mode set to B<SSL_VERIFY_PEER>, if the peer
 presents no valid SCTs the handshake will be aborted.
+If validation mode is B<SSL_CT_VALIDATION_PUBLICTLS>, SCTs are only checked if
+peer certificate have CA/B Forum Reserved Certificate Policy Identifiers. This
+mode require at least 2 different valid logs, 3 if it's valid for longer than
+180 days, as per Google and Apple CT policy.
 If the verification mode is B<SSL_VERIFY_NONE>, the handshake will continue
 despite lack of valid SCTs.
 However, in that case if the verification status before the built-in callback

@@ -82,7 +82,8 @@ typedef enum {
 typedef enum {
     SSL_TEST_CT_VALIDATION_NONE = 0, /* Default */
     SSL_TEST_CT_VALIDATION_PERMISSIVE,
-    SSL_TEST_CT_VALIDATION_STRICT
+    SSL_TEST_CT_VALIDATION_STRICT,
+    SSL_TEST_CT_VALIDATION_PUBLICTLS
 } ssl_ct_validation_t;
 
 typedef enum {

@@ -692,6 +692,10 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         if (!TEST_true(SSL_CTX_enable_ct(client_ctx, SSL_CT_VALIDATION_STRICT)))
             goto err;
         break;
+    case SSL_TEST_CT_VALIDATION_PUBLICTLS:
+        if (!TEST_true(SSL_CTX_enable_ct(client_ctx,
+                                         SSL_CT_VALIDATION_PUBLICTLS)))
+            goto err;
     case SSL_TEST_CT_VALIDATION_NONE:
         break;
     }

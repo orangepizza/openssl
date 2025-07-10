@@ -423,6 +423,7 @@ static const test_enum ssl_ct_validation_modes[] = {
     {"None", SSL_TEST_CT_VALIDATION_NONE},
     {"Permissive", SSL_TEST_CT_VALIDATION_PERMISSIVE},
     {"Strict", SSL_TEST_CT_VALIDATION_STRICT},
+    {"PublicTLS", SSL_TEST_CT_VALIDATION_PUBLICTLS},
 };
 
 __owur static int parse_ct_validation(SSL_TEST_CLIENT_CONF *client_conf,

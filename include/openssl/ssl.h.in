@@ -2616,7 +2616,8 @@ int SSL_CTX_set_ct_validation_callback(SSL_CTX *ctx,
  */
 enum {
     SSL_CT_VALIDATION_PERMISSIVE = 0,
-    SSL_CT_VALIDATION_STRICT
+    SSL_CT_VALIDATION_STRICT,
+    SSL_CT_VALIDATION_PUBLICTLS
 };
 
 /*
@@ -2624,8 +2625,10 @@ enum {
  * validation variants.  The SSL_CT_VALIDATION_PERMISSIVE variant always
  * continues the handshake, the application can make appropriate decisions at
  * handshake completion.  The SSL_CT_VALIDATION_STRICT variant requires at
- * least one valid SCT, or else handshake termination will be requested.  The
- * handshake may continue anyway if SSL_VERIFY_NONE is in effect.
+ * least one valid SCT, or else handshake termination will be requested.
+ * The SSL_CT_VALIDATION_PUBLICTLS variant requires SCT only when certificate
+ * is signed with CA/B Forum TLS policy (EV/OV/DV), otherwise alway pass.
+ * The handshake may continue anyway if SSL_VERIFY_NONE is in effect.
  */
 int SSL_enable_ct(SSL *s, int validation_mode);
 int SSL_CTX_enable_ct(SSL_CTX *ctx, int validation_mode);

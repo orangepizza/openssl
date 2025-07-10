@@ -6541,6 +6541,52 @@ static int ct_strict(const CT_POLICY_EVAL_CTX *ctx,
     return 0;
 }
 
+/* only check SCT result if it have CAB forum defined TLS policy. otheriwise pass */
+static int ct_publictls(const CT_POLICY_EVAL_CTX *ctx, const STACK_OF(SCT) *scts, void *unused_arg)
+{
+    int count = scts != NULL ? sk_SCT_num(scts) : 0;
+    int i, j, validsct = 0;
+    char ispublic = 0, logsneeded = 2;
+    const ASN1_OBJECT *EV = OBJ_txt2obj("2.23.140.1.1", 1);
+    const ASN1_OBJECT *DV = OBJ_txt2obj("2.23.140.1.2.1", 1);
+    const ASN1_OBJECT *OV = OBJ_txt2obj("2.23.140.1.2.2", 1);
+    const ASN1_OBJECT *IV = OBJ_txt2obj("2.23.140.1.2.3", 1);
+    X509 *cert = CT_POLICY_EVAL_CTX_get0_cert(ctx);
+
+    ASN1_TIME_diff(&i, &j, X509_get0_notBefore(cert), X509_get0_notAfter(cert));
+    if (i >= 180)
+        logsneeded = 3; /* chrome ct policy wants 3 scts if cert life is over 180 days */
+
+    CERTIFICATEPOLICIES *cert_policy = X509_get_ext_d2i(cert, NID_certificate_policies, NULL, NULL);
+    if (cert_policy == NULL)
+        return 1;
+    for (i = 0; sk_POLICYINFO_num(cert_policy); i++) {
+        POLICYINFO *pi = sk_POLICYINFO_value(cert_policy, i);
+
+        if (OBJ_cmp(pi->policyid, EV) == 0 ||
+            OBJ_cmp(pi->policyid, DV) == 0 ||
+            OBJ_cmp(pi->policyid, OV) == 0 ||
+            OBJ_cmp(pi->policyid, IV))
+            ispublic++;
+    }
+    CERTIFICATEPOLICIES_free(cert_policy);
+    if (!ispublic)
+        /* don't check SCT for private CA */
+        return 1;
+    for (i = 0; i < count; ++i) {
+        SCT *sct = sk_SCT_value(scts, i);
+        int status = SCT_get_validation_status(sct);
+
+        if (status == SCT_VALIDATION_STATUS_VALID)
+            validsct++;
+    }
+    /* our ct-log config file includes retired logs, so it needs 2 */
+    if (validsct >= logsneeded)
+        return 1;
+    ERR_raise(ERR_LIB_SSL, SSL_R_NO_VALID_SCTS);
+    return 0;
+}
+
 int SSL_set_ct_validation_callback(SSL *s, ssl_ct_validation_cb callback,
                                    void *arg)
 {
@@ -6719,6 +6765,8 @@ int SSL_CTX_enable_ct(SSL_CTX *ctx, int validation_mode)
         return SSL_CTX_set_ct_validation_callback(ctx, ct_permissive, NULL);
     case SSL_CT_VALIDATION_STRICT:
         return SSL_CTX_set_ct_validation_callback(ctx, ct_strict, NULL);
+    case SSL_CT_VALIDATION_PUBLICTLS:
+        return SSL_CTX_set_ct_validation_callback(ctx, ct_publictls, NULL);
     }
 }
 
@@ -6732,6 +6780,8 @@ int SSL_enable_ct(SSL *s, int validation_mode)
         return SSL_set_ct_validation_callback(s, ct_permissive, NULL);
     case SSL_CT_VALIDATION_STRICT:
         return SSL_set_ct_validation_callback(s, ct_strict, NULL);
+    case SSL_CT_VALIDATION_PUBLICTLS:
+        return SSL_set_ct_validation_callback(s, ct_publictls, NULL);
     }
 }
 
