@@ -118,4 +118,17 @@ our @tests = (
             "ExpectedResult" => "Success",
         },
     },
+    {
+        name => "ct-publictls-without-scts-private",
+        server => {
+        },
+        client => {
+            extra => {
+                "CTValidation" => "PublicTLS",
+            },
+        },
+        test => {
+            "ExpectedResult" => "Success",
+        },
+    },
 );

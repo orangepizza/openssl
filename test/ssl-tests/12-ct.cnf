@@ -1,6 +1,6 @@
 # Generated with generate_ssl_tests.pl
 
-num_tests = 6
+num_tests = 7
 
 test-0 = 0-ct-permissive-without-scts
 test-1 = 1-ct-permissive-with-scts
@@ -8,6 +8,7 @@ test-2 = 2-ct-strict-without-scts
 test-3 = 3-ct-strict-with-scts
 test-4 = 4-ct-permissive-resumption
 test-5 = 5-ct-strict-resumption
+test-6 = 6-ct-publictls-without-scts-private
 # ===========================================================
 
 [0-ct-permissive-without-scts]
@@ -187,5 +188,32 @@ CTValidation = Strict
 
 [5-ct-strict-resumption-resume-client-extra]
 CTValidation = Strict
+
+
+# ===========================================================
+
+[6-ct-publictls-without-scts-private]
+ssl_conf = 6-ct-publictls-without-scts-private-ssl
+
+[6-ct-publictls-without-scts-private-ssl]
+server = 6-ct-publictls-without-scts-private-server
+client = 6-ct-publictls-without-scts-private-client
+
+[6-ct-publictls-without-scts-private-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[6-ct-publictls-without-scts-private-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-6]
+ExpectedResult = Success
+client = 6-ct-publictls-without-scts-private-client-extra
+
+[6-ct-publictls-without-scts-private-client-extra]
+CTValidation = PublicTLS
 
 
