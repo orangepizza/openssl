@@ -6545,12 +6545,9 @@ static int ct_strict(const CT_POLICY_EVAL_CTX *ctx,
 static int ct_publictls(const CT_POLICY_EVAL_CTX *ctx, const STACK_OF(SCT) *scts, void *unused_arg)
 {
     int count = scts != NULL ? sk_SCT_num(scts) : 0;
-    int i, j, validsct = 0;
+    int i, j, len, validsct = 0;
     char ispublic = 0, logsneeded = 2;
-    const ASN1_OBJECT *EV = OBJ_txt2obj("2.23.140.1.1", 1);
-    const ASN1_OBJECT *DV = OBJ_txt2obj("2.23.140.1.2.1", 1);
-    const ASN1_OBJECT *OV = OBJ_txt2obj("2.23.140.1.2.2", 1);
-    const ASN1_OBJECT *IV = OBJ_txt2obj("2.23.140.1.2.3", 1);
+    char oidtext[100];
     X509 *cert = CT_POLICY_EVAL_CTX_get0_cert(ctx);
 
     ASN1_TIME_diff(&i, &j, X509_get0_notBefore(cert), X509_get0_notAfter(cert));
@@ -6558,16 +6555,14 @@ static int ct_publictls(const CT_POLICY_EVAL_CTX *ctx, const STACK_OF(SCT) *scts
         logsneeded = 3; /* chrome ct policy wants 3 scts if cert life is over 180 days */
 
     CERTIFICATEPOLICIES *cert_policy = X509_get_ext_d2i(cert, NID_certificate_policies, NULL, NULL);
-    if (cert_policy == NULL)
+    if (cert_policy == NULL){
         return 1;
+    }
     for (i = 0; sk_POLICYINFO_num(cert_policy); i++) {
         POLICYINFO *pi = sk_POLICYINFO_value(cert_policy, i);
-
-        if (OBJ_cmp(pi->policyid, EV) == 0 ||
-            OBJ_cmp(pi->policyid, DV) == 0 ||
-            OBJ_cmp(pi->policyid, OV) == 0 ||
-            OBJ_cmp(pi->policyid, IV))
-            ispublic++;
+        j = OBJ_obj2txt(oidtext, 100, pi->policyid, 1);
+        if (strncmp("2.23.140.1.1", oidtext, 13) || strncmp("2.23.140.1.2.", oidtext , 13))
+            ispublic++; /* if this have cab defined policy oid */
     }
     CERTIFICATEPOLICIES_free(cert_policy);
     if (!ispublic)

@@ -1,6 +1,6 @@
 # Generated with generate_ssl_tests.pl
 
-num_tests = 7
+num_tests = 8
 
 test-0 = 0-ct-permissive-without-scts
 test-1 = 1-ct-permissive-with-scts
@@ -9,6 +9,7 @@ test-3 = 3-ct-strict-with-scts
 test-4 = 4-ct-permissive-resumption
 test-5 = 5-ct-strict-resumption
 test-6 = 6-ct-publictls-without-scts-private
+test-7 = 7-ct-publictls-without-scts-public
 # ===========================================================
 
 [0-ct-permissive-without-scts]
@@ -214,6 +215,34 @@ ExpectedResult = Success
 client = 6-ct-publictls-without-scts-private-client-extra
 
 [6-ct-publictls-without-scts-private-client-extra]
+CTValidation = PublicTLS
+
+
+# ===========================================================
+
+[7-ct-publictls-without-scts-public]
+ssl_conf = 7-ct-publictls-without-scts-public-ssl
+
+[7-ct-publictls-without-scts-public-ssl]
+server = 7-ct-publictls-without-scts-public-server
+client = 7-ct-publictls-without-scts-public-client
+
+[7-ct-publictls-without-scts-public-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/ee-cert-policies-cab-nosct.pem
+CipherString = DEFAULT
+PrivateKey = ${ENV::TEST_CERTS_DIR}/ee-key.pem
+
+[7-ct-publictls-without-scts-public-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-7]
+ExpectedClientAlert = HandshakeFailure
+ExpectedResult = ClientFail
+client = 7-ct-publictls-without-scts-public-client-extra
+
+[7-ct-publictls-without-scts-public-client-extra]
 CTValidation = PublicTLS
 
 

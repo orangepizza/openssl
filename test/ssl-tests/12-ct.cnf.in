@@ -131,4 +131,21 @@ our @tests = (
             "ExpectedResult" => "Success",
         },
     },
+    {
+        name => "ct-publictls-without-scts-public",
+        server => {
+            "Certificate" => test_pem("ee-cert-policies-cab-nosct.pem"),
+            "PrivateKey"  => test_pem("ee-key.pem"),
+        },
+        client => {
+            "VerifyCAFile" => test_pem("root-cert.pem"),
+            extra => {
+                "CTValidation" => "PublicTLS",
+            },
+        },
+        test => {
+            "ExpectedResult" => "ClientFail",
+            "ExpectedClientAlert" => "HandshakeFailure",
+        },
+    },
 );
